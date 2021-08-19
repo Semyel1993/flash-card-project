@@ -7,40 +7,28 @@ BACKGROUND_COLOR = "#B1DDC6"
 WORDS_TO_LEARN_PATH = "./data/words_to_learn.csv"
 ENGLISH_WORDS_PATH = "./data/english_words.csv"
 
-english_df = pd.read_csv(ENGLISH_WORDS_PATH)
-dict_of_words = english_df.to_dict(orient="records")
 current_card = {}
+dict_of_words = {}
 
-
-def delete_row_from_csv(path_to_csv, card):
-    english_df = pd.read_csv(path_to_csv)
-    dict_of_words = english_df.to_dict(orient="records")
-    dict_of_words.remove(card)
-    pd.DataFrame(dict_of_words).to_csv(path_to_csv, index=False)
-
-
-def add_to_learn(card):
-    df_to_learn = pd.DataFrame()
-    try:
-        df_to_learn = pd.read_csv(WORDS_TO_LEARN_PATH)
-    except (FileNotFoundError, pd.errors.EmptyDataError):
-        df_to_learn.to_csv(WORDS_TO_LEARN_PATH, mode="a", index=False)
-    finally:
-        df_to_learn.append(card, ignore_index=True)
-        # df_to_learn.to_csv(WORDS_TO_LEARN_PATH, mode="a", index=False)
+try:
+    data = pd.read_csv(WORDS_TO_LEARN_PATH)
+except FileNotFoundError:
+    original_data = pd.read_csv(ENGLISH_WORDS_PATH)
+    dict_of_words = original_data.to_dict(orient="records")
+else:
+    dict_of_words = data.to_dict(orient="records")
 
 
 def right_button_clicked():
     global current_card
+    dict_of_words.remove(current_card)
+    pd.DataFrame(dict_of_words).to_csv(WORDS_TO_LEARN_PATH, index=False)
     next_card()
-    delete_row_from_csv(ENGLISH_WORDS_PATH, current_card)
 
 
 def wrong_button_clicked():
     global current_card
     next_card()
-    delete_row_from_csv(ENGLISH_WORDS_PATH, current_card)
-    add_to_learn(current_card)
 
 
 def next_card():
@@ -48,8 +36,8 @@ def next_card():
     global current_card
     window.after_cancel(flip_timer)
     current_card = random.choice(dict_of_words)
-    rank = dict_of_words.index(current_card) + 1
     english_word = current_card["english"]
+    rank = current_card["rank"]
 
     canvas.itemconfig(canvas_background, image=card_front_image)
     canvas.itemconfig(language_text, text="English", fill="black")
@@ -81,7 +69,7 @@ canvas_background = canvas.create_image(400, 263, image=card_front_image)
 
 language_text = canvas.create_text(400, 150, font=("Arial", 40, "italic"))
 word_text = canvas.create_text(400, 263, font=("Arial", 60, "bold"))
-rank_text = canvas.create_text(400, 400, font=("Arial", 10))
+rank_text = canvas.create_text(400, 380, font=("Arial", 14))
 
 right_img = PhotoImage(file="./images/right.png")
 right_button = Button(image=right_img, highlightthickness=0, relief="flat", border=0, command=right_button_clicked)
